@@ -30,6 +30,16 @@
  *
  *******************************************************************************/
 
+//#define USE_ACCEL
+
+#ifdef USE_ACCEL
+#include <Wire.h>
+#include "MMA7660.h"
+MMA7660 acc;
+float acc_x, acc_y, acc_z, acc_z_avg;
+bool isRobotInverted = false;
+#endif
+
 //Includes
 #include <Servo.h>
 #include <IRGamepad.h>
@@ -116,6 +126,10 @@ void setup()
   servoRearRight.writeMicroseconds(servoSpeedRight);
 
   myGamepad.enable();
+
+#ifdef USE_ACCEL
+  acc.init();
+#endif
 
   Serial.println("Whegbot Ready.");
 }
@@ -276,6 +290,15 @@ void loop()
       myGamepad.update_button_states();
     }
 
+#ifdef USE_ACCEL
+    if ( isRobotInverted )
+    {
+      int servoSwapSpeed = servoSpeedLeft;
+      servoSpeedLeft = servoSpeedRight;
+      servoSpeedRight = servoSwapSpeed;
+    }
+#endif
+
     Serial.print( " button" );
 
     Serial.print( " PWM L: " );
@@ -288,6 +311,26 @@ void loop()
     servoSpeedLeft = ServoStopSpeed;
     servoSpeedRight = ServoStopSpeed;
   }
+
+#ifdef USE_ACCEL
+  if ( acc.getAcceleration( &acc_x, &acc_y, &acc_z ) )
+  {
+    acc_z_avg = (0.6 * acc_z_avg) + (0.4 * acc_z);
+    if ( acc_z_avg > 0 )
+    {
+      isRobotInverted = true;
+    }
+    else
+    {
+      isRobotInverted = false;
+    }
+
+    Serial.print("z = ");
+    Serial.println(acc_z_avg);
+    delay(50);
+  }
+
+#endif
 
   servoFrontLeft.writeMicroseconds(servoSpeedLeft);
   servoFrontRight.writeMicroseconds(servoSpeedRight);
