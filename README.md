@@ -1,2 +1,2 @@
-# Whegbot
-Whegbot Arduino Sketches
+# Whegly
+Whegly Arduino Sketches
